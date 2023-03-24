@@ -1,0 +1,6 @@
+﻿  chess_server.cpp
+C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessServer\chess_server.cpp(61,30): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessServer\chess_server.cpp(66,30): warning C4305: '-=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessServer\chess_server.cpp(71,30): warning C4305: '-=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessServer\chess_server.cpp(76,30): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+  ChessServer.vcxproj -> C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessServer\x64\Debug\ChessServer.exe
