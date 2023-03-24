@@ -5,7 +5,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-
 using namespace std;
 
 #pragma comment (lib, "WS2_32.LIB")
