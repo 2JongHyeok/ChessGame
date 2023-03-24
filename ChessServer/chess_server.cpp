@@ -1,6 +1,9 @@
 #include <iostream>
 #include <WS2tcpip.h>
 
+// 코드에 필요한 변수들 정의
+#define NUM_OF_TOKENS 10
+
 using namespace std;
 #pragma comment (lib, "WS2_32.LIB")
 
@@ -11,6 +14,17 @@ struct move_pawn {
     int type;       // 1.up 2.down 3.left 4.right
     float x, y;
 };
+
+struct my_tokens {
+    float x;
+    float y;
+};
+
+my_tokens token[NUM_OF_TOKENS];
+
+
+// 필요 함수 목록
+void init_tockens();
 
 void error_display(const char* msg, int err_no)
 {
@@ -27,8 +41,12 @@ void error_display(const char* msg, int err_no)
     LocalFree(lpMsgBuf);
 }
 
+
+// 메인문 시작
 int main()
 {
+    init_tockens();  // 토큰 위치 초기화
+
     wcout.imbue(locale("korean"));
     WSADATA WSAData;
     WSAStartup(MAKEWORD(2, 0), &WSAData);
@@ -57,24 +75,32 @@ int main()
         cout << "Client Sent [" << recv_byte << "bytes] : " << recv_buf << endl;
         move_pawn* p = reinterpret_cast<move_pawn*>(recv_buf);
         cout << "Client Sent move_pawn structure with x = " << p->x << " and y = " << p->y << endl;
-        if (p->type == 1) {
-            if (p->y <= 0.225 * 8) {
-                p->y += 0.225;
+        if (p->type == 0) {
+            p->x = token[0].x;
+            p->y = token[0].y;
+        }
+        else if (p->type == 1) {
+            if (token[0].y <= 0.225 * 8) {
+                token[0].y += 0.225;
+                p->y = token[0].y;
             }
         }
-        if (p->type == 2) {
-            if (p->y > 0.25) {
-                p->y -= 0.225;
+        else if (p->type == 2) {
+            if (token[0].y > 0.25) {
+                token[0].y -= 0.225;
+                p->y = token[0].y;
             }
         }
-        if (p->type == 3) {
-            if (p->x > 0.25) {
-                p->x -= 0.225;
+        else if (p->type == 3) {
+            if (token[0].x > 0.25) {
+                token[0].x -= 0.225;
+                p->x = token[0].x;
             }
         }
-        if (p->type == 4) {
-            if (p->x < 1.75) {
-                p->x += 0.225;
+        else if (p->type == 4) {
+            if (token[0].x < 1.75) {
+                token[0].x += 0.225;
+                p->x = token[0].x;
             }
         }
         DWORD sent_byte;
@@ -89,4 +115,15 @@ int main()
     closesocket(c_socket);
     closesocket(s_socket);
     WSACleanup();
+}
+
+void init_tockens (){
+    for (int i = 0; i < 8; ++i) {   // 1 ~ 8번 말 위치 정해주기
+        token[i].x = 0.22 + 0.225 * i;
+        token[i].y = 0.45;
+    }
+    for (int i = 8; i < 10; ++i) {  // 9 ~ 10번 말 위치 정해주기
+        token[i].x = 0.22 + 0.225 * i;
+
+    }
 }

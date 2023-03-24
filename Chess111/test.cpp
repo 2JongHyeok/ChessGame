@@ -9,20 +9,18 @@ using namespace std;
 
 #pragma comment (lib, "WS2_32.LIB")
 
-const char* SERVER_ADDR; // = "127.0.0.1";
-const short SERVER_PORT = 4000;
-SOCKET s_socket;
-void check_soket(int value);
+const char* SERVER_ADDR; // = "127.0.0.1"; // 서버 주소 ( 127.0.0.1 ) 은 내 컴퓨터의 주소임.
+const short SERVER_PORT = 4000; // 포트는 가능하면 1000번대 이상으로. 1~30 ? 정도는 이미 있는 포트라 사용하지 말것.
+SOCKET s_socket;	// 사용할 소켓의 이름 지정.
+void check_soket(int value);	// 소켓을 체크해 주는 함수임.
 
 
 struct move_pawn {
-	int type;       // 1.up 2.down 3.left 4.right
-	float x, y;
+	int type = 0;       // 1.up 2.down 3.left 4.right
+	float x, y;		// 현재 위치를 가지고 있고, 보내줄 것임.
 };
 
-move_pawn p;
-
-
+move_pawn p;	// 캐릭터 위치들을 잡아줄 p라는 변수 생성
 
 void error_display(const char* msg, int err_no)
 {
@@ -94,12 +92,6 @@ void init()
 
 	free(pawn);
 
-	// pawn 위치 설정
-
-	p.x = 0.22 + 0.225 * 4;
-	p.y = 0.45;
-
-
 	WSADATA WSAData;
 	WSAStartup(MAKEWORD(2, 0), &WSAData);
 	s_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
@@ -110,8 +102,22 @@ void init()
 	inet_pton(AF_INET, SERVER_ADDR, &server_addr.sin_addr);
 	connect(s_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
 
+	WSABUF send_buf[1];
+	send_buf[0].buf = reinterpret_cast<char*>(&p);
+	send_buf[0].len = sizeof(move_pawn);
+	DWORD sent_byte;
+	int ret = WSASend(s_socket, send_buf, 1, &sent_byte, 0, 0, 0);
 
+	move_pawn recv_move;
+	WSABUF recv_buf[1];
+	recv_buf[0].buf = reinterpret_cast<char*>(&recv_move);
+	recv_buf[0].len = sizeof(move_pawn);
+	DWORD recv_byte;
+	DWORD recv_flag = 0;
+	ret = WSARecv(s_socket, recv_buf, 1, &recv_byte, &recv_flag, 0, 0);
 
+	p.x = recv_move.x;
+	p.y = recv_move.y;
 }
 
 void DrawChessBoard()

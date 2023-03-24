@@ -1,1 +1,2 @@
 C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessServer\x64\Debug\ChessServer.exe
+C:\Users\gurpa\OneDrive\바탕 화면\겜공 3학년 1학기\게임 서버\ChessGame\ChessServer\x64\Debug\ChessServer.exe
