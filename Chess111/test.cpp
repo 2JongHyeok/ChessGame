@@ -1,8 +1,11 @@
+#define STB_IMAGE_IMPLEMENTATION
+#define PLAYER_NUMBER  1	// 서버에서 플레이어를 구분해줄수 있게해줄 번호 부여.
+#define MAX_PLAYER 10		// 최대 플레이어 수
 #include <iostream>
 #include <string>
 #include <WS2tcpip.h>
 #include <GL/glut.h>
-#define STB_IMAGE_IMPLEMENTATION
+#include <array>
 #include "stb_image.h"
 
 using namespace std;
@@ -15,12 +18,23 @@ SOCKET s_socket;	// 사용할 소켓의 이름 지정.
 void check_soket(int value);	// 소켓을 체크해 주는 함수임.
 
 
-struct move_pawn {
-	int type = 0;       // 1.up 2.down 3.left 4.right
-	float x, y;		// 현재 위치를 가지고 있고, 보내줄 것임.
+//struct move_pawn {
+//	int playerNum;
+//	int type = 0;       // 1.up 2.down 3.left 4.right
+//	float x, y;		// 현재 위치를 가지고 있고, 보내줄 것임.
+//};
+//
+//move_pawn p;	// 캐릭터 위치들을 잡아줄 p라는 변수 생성
+
+struct all_tokens {
+	int playerNum = PLAYER_NUMBER;
+	int type = 0;	// 1.up, 2.down, 3.left, 4.right
+	array<float, MAX_PLAYER> x{ 0 };
+	array<float, MAX_PLAYER> y{ 0 };
+	array<int, MAX_PLAYER>loginPlayer{ 0 };
 };
 
-move_pawn p;	// 캐릭터 위치들을 잡아줄 p라는 변수 생성
+all_tokens all;
 
 void error_display(const char* msg, int err_no)
 {
@@ -92,6 +106,7 @@ void init()
 
 	free(pawn);
 
+	// 처음 시작할때 서버에서 내 말의 위치를 받아옴
 	WSADATA WSAData;
 	WSAStartup(MAKEWORD(2, 0), &WSAData);
 	s_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
@@ -103,21 +118,22 @@ void init()
 	connect(s_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
 
 	WSABUF send_buf[1];
-	send_buf[0].buf = reinterpret_cast<char*>(&p);
-	send_buf[0].len = sizeof(move_pawn);
+	send_buf[0].buf = reinterpret_cast<char*>(&all);
+	send_buf[0].len = sizeof(all);
 	DWORD sent_byte;
 	int ret = WSASend(s_socket, send_buf, 1, &sent_byte, 0, 0, 0);
 
-	move_pawn recv_move;
+	all_tokens recv_move;
 	WSABUF recv_buf[1];
 	recv_buf[0].buf = reinterpret_cast<char*>(&recv_move);
-	recv_buf[0].len = sizeof(move_pawn);
+	recv_buf[0].len = sizeof(all_tokens);
 	DWORD recv_byte;
 	DWORD recv_flag = 0;
 	ret = WSARecv(s_socket, recv_buf, 1, &recv_byte, &recv_flag, 0, 0);
 
-	p.x = recv_move.x;
-	p.y = recv_move.y;
+	all.loginPlayer = recv_move.loginPlayer;	// 현재 로그인한 플레이어 알려주기.
+	all.x = recv_move.x;	// 누군가의 위치가 바뀌면 그 위치로 바꿔줌
+	all.y = recv_move.y;
 }
 
 void DrawChessBoard()
@@ -133,10 +149,15 @@ void DrawChessBoard()
 void DrawPawn()
 {
 	glBegin(GL_POLYGON);
-	glTexCoord2d(0.0, 1.0);      glVertex3d(p.x - 0.1f, p.y + 0.1f, 0.0);
-	glTexCoord2d(0.0, 0.0);      glVertex3d(p.x - 0.1f, p.y - 0.1f, 0.0);
-	glTexCoord2d(1.0, 0.0);      glVertex3d(p.x + 0.1f, p.y - 0.1f, 0.0);
-	glTexCoord2d(1.0, 1.0);      glVertex3d(p.x + 0.1f, p.y + 0.1f, 0.0);
+	for (int i = 0; i < MAX_PLAYER; ++i) {
+		cout << all.loginPlayer[i] << endl;
+		if (all.loginPlayer[i] != 0) {
+			glTexCoord2d(0.0, 1.0);      glVertex3d(all.x[i] - 0.1f, all.y[i] + 0.1f, 0.0);
+			glTexCoord2d(0.0, 0.0);      glVertex3d(all.x[i] - 0.1f, all.y[i] - 0.1f, 0.0);
+			glTexCoord2d(1.0, 0.0);      glVertex3d(all.x[i] + 0.1f, all.y[i] - 0.1f, 0.0);
+			glTexCoord2d(1.0, 1.0);      glVertex3d(all.x[i] + 0.1f, all.y[i] + 0.1f, 0.0);
+		}
+	}
 	glEnd();
 }
 
@@ -165,34 +186,37 @@ void reshape(GLint w, GLint h) {
 void SpecialKeyboard(int key, int x, int y)
 {
 	if (key == GLUT_KEY_UP) {
-		p.type = 1;
+		all.type = 1;
 	}
-	if (key == GLUT_KEY_DOWN) {
-		p.type = 2;
+	else if (key == GLUT_KEY_DOWN) {
+		all.type = 2;
 	}
-	if (key == GLUT_KEY_LEFT) {
-		p.type = 3;
-
+	else if (key == GLUT_KEY_LEFT) {
+		all.type = 3;
 	}
-	if (key == GLUT_KEY_RIGHT) {
-		p.type = 4;
+	else if (key == GLUT_KEY_RIGHT) {
+		all.type = 4;
+	}
+	else {
+		all.type = 0;
 	}
 	WSABUF send_buf[1];
-	send_buf[0].buf = reinterpret_cast<char*>(&p);
-	send_buf[0].len = sizeof(move_pawn);
+	send_buf[0].buf = reinterpret_cast<char*>(&all);
+	send_buf[0].len = sizeof(all_tokens);
 	DWORD sent_byte;
 	int ret = WSASend(s_socket, send_buf, 1, &sent_byte, 0, 0, 0);
 
-	move_pawn recv_move;
+	all_tokens recv_move;
 	WSABUF recv_buf[1];
 	recv_buf[0].buf = reinterpret_cast<char*>(&recv_move);
-	recv_buf[0].len = sizeof(move_pawn);
+	recv_buf[0].len = sizeof(all_tokens);
 	DWORD recv_byte;
 	DWORD recv_flag = 0;
 	ret = WSARecv(s_socket, recv_buf, 1, &recv_byte, &recv_flag, 0, 0);
 
-	p.x = recv_move.x;
-	p.y = recv_move.y;
+	all.loginPlayer = recv_move.loginPlayer;
+	all.x = recv_move.x;	// 누군가의 위치가 바뀌면 그 위치로 바꿔줌
+	all.y = recv_move.y;
 
 	glutPostRedisplay();
 }
